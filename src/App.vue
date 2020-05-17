@@ -93,7 +93,7 @@ export default {
         key: process.env.VUE_APP_KEY,
         q: this.name,
         lang: "ja",
-        per_page: 20,
+        per_page: 50,
         page: this.page,
         orientation: "vertical",
       };
