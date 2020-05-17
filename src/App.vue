@@ -1,14 +1,15 @@
 <template>
   <div id="app">
-    <input>
+    <v-form ref="form" lazy-validation @submit.prevent="search">
+      <v-text-field
+        v-model="name"
+        label="Write Your likes!!!"
+        required
+      ></v-text-field>
+    </v-form>
     <VueTinder ref="tinder" :queue.sync="queue" @submit="submit">
       <template slot-scope="{ data }">
-        <div
-          class="pic"
-          :style="
-            `background-image:url(https://picsum.photos/710/1152/?random=${data.key})`
-          "
-        ></div>
+        <div class="pic" :style="`background-image:url(${data.key})`"></div>
       </template>
       <img
         class="like-pointer"
@@ -45,6 +46,7 @@
 
 <script>
 import VueTinder from "vue-tinder";
+import axios from "axios";
 
 export default {
   name: "App",
@@ -53,28 +55,75 @@ export default {
   },
   data: function() {
     return {
+      name: "",
       queue: [],
+      page: 1,
     };
   },
   created() {
-    this.getData();
+    this.queue = [
+      {
+        key:
+          "https://pixabay.com/get/53e5d4464f56b108f5d084609629317b1c3cdbe4514c704c7d267cd0924dc250_1280.jpg",
+      },
+      {
+        key:
+          "https://pixabay.com/get/57e1d1444250b108f5d084609629317b1c3cdbe4514c704c7d267cd0924dc250_1280.jpg",
+      },
+      {
+        key:
+          "https://pixabay.com/get/53e0dc4b4351ac14f6da8c7dda7936781036dde052536c48702772d39348c55fb0_1280.jpg",
+      },
+      {
+        key:
+          "https://pixabay.com/get/57e6d0424356a914f6da8c7dda7936781036dde052536c48702772d39348c55fb0_1280.jpg",
+      },
+      {
+        key:
+          "https://pixabay.com/get/57e7d6404d4fad0bffd8992cc62e3277163adfe74e5074417c287fd1974acd_1280.jpg",
+      },
+    ];
   },
   methods: {
     /**
-     * 用于产生demo用的数据
      * @method getData
      */
     getData() {
-      const list = [];
-      for (let i = 0; i < 5; i++) {
-        list.push({
-          key: Math.random(),
+      const params = {
+        key: process.env.VUE_APP_KEY,
+        q: this.name,
+        lang: "ja",
+        per_page: 20,
+        page: this.page,
+        orientation: "vertical",
+      };
+      axios
+        .get("https://pixabay.com/api/", { params })
+        .then((res) => {
+          const list = res.data.hits;
+          if (!list || list.length === 0) return;
+          this.queue = this.queue.concat(
+            list.map((v) => {
+              return { key: v.largeImageURL };
+            })
+          );
+        })
+        .catch((error) => {
+          alert("error");
+          console.log(error, params);
         });
-      }
-      this.queue = this.queue.concat(list);
+    },
+
+    /**
+     * @method search
+     */
+    search() {
+      console.log("fire");
+      this.queue = [];
+      this.getData();
     },
     /**
-     * 点击按钮所绑定的方法，此方法为调用vue-tinder组件内方法的示例，仅供参考
+     *
      * @method submit
      * @param  {String} choice
      */
@@ -82,7 +131,7 @@ export default {
       this.$refs.tinder.decide(choice);
     },
     /**
-     * 自定义事件submit绑定的方法，移除卡片的回调
+     *
      * @method submit
      * @param  {Object} choice {type,key}
      */
@@ -95,7 +144,9 @@ export default {
         case "super": // 上滑
           break;
       }
+
       if (this.queue.length < 2) {
+        this.page += 1;
         this.getData();
       }
     },
@@ -111,7 +162,7 @@ body {
 }
 
 body {
-  background: #20262e;
+  /* background: #20262e; */
   overflow: hidden;
 }
 
